@@ -435,14 +435,14 @@ void pylonNode::publishCamInfo()
                     sensor_msgs::ImagePtr img_msg = cv_bridge::CvImage(header, "bgr8", cv_img).toImageMsg();
 
                     cameraImagePub_[i].publish(img_msg);
-                    cameraInfoPub_.publish(msg);
 
                     status_->capturePath.at(i) = path;
                 }
             }
         }        
 
-        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+        cameraInfoPub_.publish(msg);
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
     }
 }
 
