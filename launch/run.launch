@@ -1,0 +1,9 @@
+<?xml version="1.0"?>
+
+<launch>
+ 
+  <rosparam file="$(find basler_ros_driver)/config/default.yaml" command="load" />
+
+  <node name="basler_ros_driver" pkg="basler_ros_driver" type="basler_ros_driver" output="screen"/>
+
+</launch>
