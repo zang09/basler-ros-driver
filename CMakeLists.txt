@@ -118,8 +118,8 @@ generate_messages(
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
   INCLUDE_DIRS include
-  LIBRARIES basler_ros_driver
-  CATKIN_DEPENDS roscpp std_msgs sensor_msgs cv_bridge image_transport message_runtime message_generation
+  #LIBRARIES basler_ros_driver
+  #CATKIN_DEPENDS roscpp std_msgs sensor_msgs cv_bridge image_transport message_runtime message_generation
   #DEPENDS system_lib
 )
 
