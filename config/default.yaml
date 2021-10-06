@@ -1,0 +1,6 @@
+camera_count : 1
+
+camera1:
+    name: cam1
+    serial_number: 23752118
+
