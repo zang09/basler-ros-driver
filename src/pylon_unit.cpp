@@ -270,7 +270,7 @@ void CCustomConfiguration::OnOpened(Pylon::CBaslerUniversalInstantCamera &camera
         camera.AutoGainLowerLimit.SetValue(0.0);
         camera.AutoGainUpperLimit.SetValue(25.0);
         camera.AutoExposureTimeLowerLimit.SetValue(50.0);
-        camera.AutoExposureTimeUpperLimit.SetValue(500000.0);
+        camera.AutoExposureTimeUpperLimit.SetValue(5000.0);
 
         //cout << "Setting Software Trigger...\n";
 #ifdef SOFTWARE_TRIGGER
