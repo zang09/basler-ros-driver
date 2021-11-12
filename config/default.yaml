@@ -1,6 +1,7 @@
 camera_count : 1
+frame_rate: 30    # 0: trigger mode
 
 camera1:
     name: cam1
-    serial_number: 23752118
+    serial_number: 23641283
 

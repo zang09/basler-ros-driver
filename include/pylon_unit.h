@@ -2,6 +2,8 @@
 #define PYLONUNIT_H
 
 #include <ros/ros.h>
+#include <cv_bridge/cv_bridge.h>
+#include <image_transport/image_transport.h>
 
 //SDK
 #include <pylon/BaslerUniversalInstantCamera.h>
@@ -45,6 +47,7 @@ public:
 
 public:
     void initCnt();
+    void setID(int id);
     void setStoreDir(const std::string path);
     void setBusyFlag(bool flag);
 
@@ -53,11 +56,15 @@ public:
     const bool getBusyFlag() const;
 
 private:
+    int id_;
     int imageCnt_;
     bool camBusy_;
 
     std::string storeDir_;
     std::string storePath_;
+
+    ros::NodeHandle nh_;
+    image_transport::Publisher cameraImagePub_;
 };
 
 
@@ -68,6 +75,7 @@ public:
     virtual ~pylonUnit();
 
     void initCnt();
+    void setID(int id);
     void setReverseOption(bool x, bool y);
     void setImageQuality(double brightness, int funcProfile, double gainLower, double gainUpper, double timeLower, double timeUpper);
     void setGrabbing(bool flag);

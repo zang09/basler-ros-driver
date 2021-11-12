@@ -3,8 +3,6 @@
 
 #include <ros/ros.h>
 
-#include <cv_bridge/cv_bridge.h>
-#include <image_transport/image_transport.h>
 #include <sensor_msgs/image_encodings.h>
 #include <basler_ros_driver/grabbing.h>
 #include <basler_ros_driver/trigger.h>
@@ -61,6 +59,7 @@ private:
 
     void imageMonitoring(int id);
     void publishCamInfo();
+    void sendTrigger();
 
 private:
     ros::NodeHandle nh_;
@@ -74,6 +73,7 @@ private:
 
     baslerStatus *status_;
     std::thread  *pubThread_;
+    std::thread  *triggerThread_;
     std::thread  **statusThread_;
     std::vector<iCamera> iCamList_;
     std::vector<pylonUnit*> pylonUnitList_;
@@ -82,6 +82,7 @@ private:
 
     int cameraCount_;
     int connected_;
+    int frame_rate_;
     bool grabbing_;
     int preTotalFileCnt_;
     bool existStoreDir_;

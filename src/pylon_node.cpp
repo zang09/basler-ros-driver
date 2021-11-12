@@ -52,6 +52,7 @@ void pylonNode::getParameters()
 {
     int camera_cnt;
     nh_.param<int>("/camera_count", camera_cnt, 0);
+    nh_.param<int>("/frame_rate", frame_rate_, 0);
 
     for(int i=0; i<camera_cnt; i++)
     {
@@ -73,12 +74,6 @@ void pylonNode::subscribeAndPublish()
     srvSaveDirectory_ = nh_.advertiseService("basler_ros_driver/set_save_dir", &pylonNode::saveDirectoryService, this);
 
     cameraInfoPub_    = nh_.advertise<basler_ros_driver::cameraInfo>("basler_ros_driver/camera_info", 1);
-    cameraImagePub_   = new image_transport::Publisher[iCamList_.size()];
-    for(int i=0; i<iCamList_.size(); i++)
-    {
-        image_transport::ImageTransport it(nh_);
-        cameraImagePub_[i] = it.advertise("basler_ros_driver/camera" + to_string(i+1) + "/image_raw", 1);
-    }
 }
 
 void pylonNode::addCamera(iCamera camera)
@@ -184,6 +179,7 @@ bool pylonNode::connect()
             if(iCamList_[j].serial.compare(temp->getDeviceSerialNumber()) == 0)
             {
                 pylonUnitList_.at(j) = temp; //copy
+                pylonUnitList_.at(j)->setID(j+1);
 
                 string cam_path = get_current_dir_name();
                 cam_path += "/";
@@ -219,7 +215,10 @@ bool pylonNode::connect()
     for(int i=0; i<PRETEST_COUNT; i++)
     {
         for(int j=0; j<cameraCount_; j++)
+        {
+            pylonUnitList_.at(j)->setBusyFlag(true);
             pylonUnitList_.at(j)->softwareTrigger();
+        }
 
         cout << "Triggering.. [" << setfill('0') << setw(2) << (i + 1) << "/" << PRETEST_COUNT << "]";
         fflush(stdout);
@@ -243,10 +242,12 @@ bool pylonNode::connect()
         if(temp_cnt < PRETEST_COUNT)
         {
             pretest_flag = false;
+            pylonUnitList_.at(i)->setBusyFlag(false);
             ROS_ERROR_STREAM(i+1 << " >> pre-test failed .. (" << temp_cnt << "/" << PRETEST_COUNT << ")");
             continue;
         }
 
+        pylonUnitList_.at(i)->setStoreDir("");
         ROS_INFO_STREAM(i+1 << " >> camera connected! (" << temp_cnt << "/" << PRETEST_COUNT << ")");
     }
 
@@ -278,7 +279,11 @@ bool pylonNode::connect()
             status_->connectType.at(i) = pylonUnitList_.at(i)->getDeviceClass();
             statusThread_[i] = new std::thread(&pylonNode::imageMonitoring, this, i);
         }
-        pubThread_ = new std::thread(&pylonNode::publishCamInfo, this);
+
+        if(frame_rate_ == 0)
+            pubThread_ = new std::thread(&pylonNode::publishCamInfo, this);
+        else
+            triggerThread_ = new std::thread(&pylonNode::sendTrigger, this);
 
         return connected_;
     }
@@ -429,20 +434,32 @@ void pylonNode::publishCamInfo()
                 cv::Mat cv_img = cv::imread(path, cv::IMREAD_COLOR);
                 if(!cv_img.empty())
                 {
-                    std_msgs::Header header;
-                    header.stamp = ros::Time::now();
-
-                    sensor_msgs::ImagePtr img_msg = cv_bridge::CvImage(header, "bgr8", cv_img).toImageMsg();
-
-                    cameraImagePub_[i].publish(img_msg);
-
                     status_->capturePath.at(i) = path;
                 }
             }
-        }        
+        }
 
         cameraInfoPub_.publish(msg);
         std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    }
+}
+
+void pylonNode::sendTrigger()
+{
+    int sleep_time = (1.0 / frame_rate_) * 1000;
+
+    while(ros::ok() && connected_)
+    {
+        if(grabbing_)
+        {
+            for(int i=0; i<cameraCount_; i++)
+            {
+                pylonUnitList_.at(i)->setBusyFlag(true);
+                pylonUnitList_.at(i)->softwareTrigger();
+            }
+        }
+
+        std::this_thread::sleep_for(std::chrono::milliseconds(sleep_time));
     }
 }
 

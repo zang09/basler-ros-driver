@@ -48,6 +48,11 @@ void pylonUnit::initCnt()
     eventHandler_->initCnt();
 }
 
+void pylonUnit::setID(int id)
+{
+    eventHandler_->setID(id);
+}
+
 void pylonUnit::setReverseOption(bool x, bool y)
 {
     while(eventHandler_->getBusyFlag())
@@ -265,12 +270,12 @@ void CCustomConfiguration::OnOpened(Pylon::CBaslerUniversalInstantCamera &camera
         camera.ExposureAuto.SetValue(ExposureAuto_Continuous);
 
         //cout << "Auto Function Control..." << endl;
-        camera.AutoTargetBrightness.SetValue(0.20000);
+        camera.AutoTargetBrightness.SetValue(0.2);
         camera.AutoFunctionProfile.SetValue(AutoFunctionProfile_MinimizeGain);
         camera.AutoGainLowerLimit.SetValue(0.0);
         camera.AutoGainUpperLimit.SetValue(25.0);
         camera.AutoExposureTimeLowerLimit.SetValue(50.0);
-        camera.AutoExposureTimeUpperLimit.SetValue(5000.0);
+        camera.AutoExposureTimeUpperLimit.SetValue(50000.0);
 
         //cout << "Setting Software Trigger...\n";
 #ifdef SOFTWARE_TRIGGER
@@ -375,6 +380,9 @@ DeviceType CCustomConfiguration::getType()
 
 CCustomEvtHandler::CCustomEvtHandler()
 {
+    image_transport::ImageTransport it(nh_);
+    cameraImagePub_ = it.advertise("basler_ros_driver/camera1/image_raw", 1);
+
     camBusy_ = false;
 }
 
@@ -390,10 +398,10 @@ void CCustomEvtHandler::OnImageGrabbed(Pylon::CBaslerUniversalInstantCamera &cam
         //cout << "SizeX: " << grabResult->GetWidth() << endl;
         //cout << "SizeY: " << grabResult->GetHeight() << endl;
         //auto x = grabResult->GetGrabResultDataImpl();
-        CImageFormatConverter formatConverter;					    //me
-        formatConverter.OutputPixelFormat = PixelType_BGR8packed;   //me
-        CPylonImage pylonImage;									    //me
-        formatConverter.Convert(pylonImage, grabResult);            //me
+        CImageFormatConverter formatConverter;
+        formatConverter.OutputPixelFormat = PixelType_BGR8packed;
+        CPylonImage pylonImage;
+        formatConverter.Convert(pylonImage, grabResult);
 
         // Save image by SDK
         /*
@@ -407,8 +415,8 @@ void CCustomEvtHandler::OnImageGrabbed(Pylon::CBaslerUniversalInstantCamera &cam
         */
 
         // Create an OpenCV image out of pylon image
-        cv::Mat openCvImage;
-        openCvImage = cv::Mat(grabResult->GetHeight(), grabResult->GetWidth(), CV_8UC3, (uint8_t *)pylonImage.GetBuffer()); //me
+        cv::Mat cv_img;
+        cv_img = cv::Mat(grabResult->GetHeight(), grabResult->GetWidth(), CV_8UC3, (uint8_t *)pylonImage.GetBuffer()); //me
 
         string image_path = storeDir_;
 
@@ -417,8 +425,17 @@ void CCustomEvtHandler::OnImageGrabbed(Pylon::CBaslerUniversalInstantCamera &cam
         image_path += buf;
         storePath_ = image_path;
 
-        cv::imwrite(storePath_, openCvImage);
-        imageCnt_++;
+        if(!storeDir_.empty())
+        {
+            cv::imwrite(storePath_, cv_img);
+            imageCnt_++;
+        }
+
+        std_msgs::Header header;
+        header.stamp = ros::Time::now();
+        sensor_msgs::ImagePtr img_msg = cv_bridge::CvImage(header, "bgr8", cv_img).toImageMsg();
+        cameraImagePub_.publish(img_msg);
+
         camBusy_ = false;
     }
     else
@@ -430,6 +447,11 @@ void CCustomEvtHandler::OnImageGrabbed(Pylon::CBaslerUniversalInstantCamera &cam
 void CCustomEvtHandler::initCnt()
 {
     imageCnt_ = 0;
+}
+
+void CCustomEvtHandler::setID(int id)
+{
+    id_ = id;
 }
 
 void CCustomEvtHandler::setStoreDir(const string path)
