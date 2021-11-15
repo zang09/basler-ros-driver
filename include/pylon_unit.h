@@ -48,6 +48,7 @@ public:
 public:
     void initCnt();
     void setID(int id);
+    void setCameraData(sensor_msgs::CameraInfo cam_info);
     void setStoreDir(const std::string path);
     void setBusyFlag(bool flag);
 
@@ -63,8 +64,10 @@ private:
     std::string storeDir_;
     std::string storePath_;
 
-    ros::NodeHandle nh_;
+    ros::NodeHandle            nh_;
+    sensor_msgs::CameraInfo    cam_info_;
     image_transport::Publisher cameraImagePub_;
+    ros::Publisher             cameraInfoPub_;
 };
 
 
@@ -76,6 +79,7 @@ public:
 
     void initCnt();
     void setID(int id);
+    void setCameraData(sensor_msgs::CameraInfo cam_info);
     void setReverseOption(bool x, bool y);
     void setImageQuality(double brightness, int funcProfile, double gainLower, double gainUpper, double timeLower, double timeUpper);
     void setGrabbing(bool flag);

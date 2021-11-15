@@ -4,6 +4,8 @@
 #include <ros/ros.h>
 
 #include <sensor_msgs/image_encodings.h>
+#include <sensor_msgs/CameraInfo.h>
+#include <sensor_msgs/distortion_models.h>
 #include <basler_ros_driver/grabbing.h>
 #include <basler_ros_driver/trigger.h>
 #include <basler_ros_driver/saveDirectory.h>
@@ -42,6 +44,7 @@ public:
 
     void getParameters();
     void subscribeAndPublish();
+    void loadCameraData(int id, std::string path);
     void addCamera(iCamera camera);
     void initStatus();
 
@@ -68,8 +71,7 @@ private:
     ros::ServiceServer srvTrigger_;
     ros::ServiceServer srvSaveDirectory_;
 
-    ros::Publisher cameraInfoPub_;
-    image_transport::Publisher *cameraImagePub_;
+    ros::Publisher captureInfoPub_;
 
     baslerStatus *status_;
     std::thread  *pubThread_;
@@ -77,6 +79,7 @@ private:
     std::thread  **statusThread_;
     std::vector<iCamera> iCamList_;
     std::vector<pylonUnit*> pylonUnitList_;
+    sensor_msgs::CameraInfo *camera_info_;
 
     Pylon::DeviceInfoList baslerList_;
 

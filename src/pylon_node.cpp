@@ -32,7 +32,7 @@ pylonNode::pylonNode() :
     subscribeAndPublish();
 
     if(!connect())
-      exit(0);
+        exit(0);
 }
 
 pylonNode::~pylonNode()
@@ -41,11 +41,11 @@ pylonNode::~pylonNode()
 
     delete statusThread_;
     delete pubThread_;
-    delete cameraImagePub_;
+    delete camera_info_;
 
     statusThread_ = nullptr;
     pubThread_ = nullptr;
-    cameraImagePub_ = nullptr;
+    camera_info_ = nullptr;
 }
 
 void pylonNode::getParameters()
@@ -54,6 +54,7 @@ void pylonNode::getParameters()
     nh_.param<int>("/camera_count", camera_cnt, 0);
     nh_.param<int>("/frame_rate", frame_rate_, 0);
 
+    camera_info_ = new sensor_msgs::CameraInfo[camera_cnt];
     for(int i=0; i<camera_cnt; i++)
     {
         iCamera temp;
@@ -62,8 +63,11 @@ void pylonNode::getParameters()
         nh_.param<std::string>("/camera" + std::to_string(i+1) + "/name", temp.name, "");
         nh_.param<int>("/camera" + std::to_string(i+1) + "/serial_number", serial_num, 0);
         temp.serial = std::to_string(serial_num);
-
         addCamera(temp);
+
+        std::string path;
+        nh_.param<std::string>("/camera" + std::to_string(i+1) + "/calibration_path", path, "");
+        loadCameraData(i, path);
     }
 }
 
@@ -73,7 +77,54 @@ void pylonNode::subscribeAndPublish()
     srvTrigger_       = nh_.advertiseService("basler_ros_driver/trigger", &pylonNode::triggerService, this);
     srvSaveDirectory_ = nh_.advertiseService("basler_ros_driver/set_save_dir", &pylonNode::saveDirectoryService, this);
 
-    cameraInfoPub_    = nh_.advertise<basler_ros_driver::cameraInfo>("basler_ros_driver/camera_info", 1);
+    captureInfoPub_    = nh_.advertise<basler_ros_driver::cameraInfo>("basler_ros_driver/capture_info", 1);
+}
+
+void pylonNode::loadCameraData(int id, string path)
+{
+    cv::FileStorage cameraData(path, cv::FileStorage::READ);
+    if (!cameraData.isOpened())
+    {
+        std::cerr << "Failed to open camera settings file at " << path << std::endl;
+        return;
+    }
+
+    cv::Mat camera_matrix;
+    cv::Mat dist_coeffs;
+    cameraData["CameraMat"] >> camera_matrix;
+    cameraData["DistCoeffs"] >> dist_coeffs;
+
+    float fx, fy, sk, cx, cy, k1, k2, p1, p2, k3;
+    fx = camera_matrix.at<double>(0, 0);
+    sk = camera_matrix.at<double>(0, 1);
+    cx = camera_matrix.at<double>(0, 2);
+    fy = camera_matrix.at<double>(1, 1);
+    cy = camera_matrix.at<double>(1, 2);
+    k1 = dist_coeffs.at<double>(0, 0);
+    k2 = dist_coeffs.at<double>(0, 1);
+    p1 = dist_coeffs.at<double>(0, 2);
+    p2 = dist_coeffs.at<double>(0, 3);
+    k3 = dist_coeffs.at<double>(0, 4);
+
+    std::cout << "Camera Matrix: " << std::endl << camera_matrix << std::endl;
+    std::cout << "Distortion Coeffs: " << std::endl << dist_coeffs << std::endl;
+
+    camera_info_[id].width = (int)cameraData["Camera.width"];
+    camera_info_[id].height = (int)cameraData["Camera.height"];
+
+    boost::array<double, 9> K = { {fx, sk, cx, 0, fy, cy, 0, 0, 1} };
+    camera_info_[id].K = K;
+
+    std::vector<double> D = {k1, k2, p1, p2, k3};
+    camera_info_[id].D = D;
+
+    boost::array<double, 9> R = { {1, 0, 0, 0, 1, 0, 0, 0, 1} };
+    camera_info_[id].R = R;
+
+    boost::array<double, 12> P = { {fx, sk, cx, 0, 0, fy, cy, 0, 0, 0, 1, 0} };
+    camera_info_[id].P = P;
+
+    camera_info_[id].distortion_model = sensor_msgs::distortion_models::EQUIDISTANT;
 }
 
 void pylonNode::addCamera(iCamera camera)
@@ -224,7 +275,7 @@ bool pylonNode::connect()
         fflush(stdout);
         for (int j = 0; j < 21; j++)
         {
-          cout << "\033[D";
+            cout << "\033[D";
         }
         fflush(stdout);
 
@@ -248,11 +299,12 @@ bool pylonNode::connect()
         }
 
         pylonUnitList_.at(i)->setStoreDir("");
+        pylonUnitList_.at(i)->setCameraData(camera_info_[i]);
         ROS_INFO_STREAM(i+1 << " >> camera connected! (" << temp_cnt << "/" << PRETEST_COUNT << ")");
     }
 
-    for(int i=0; i<cameraCount_; i++)
-        pylonUnitList_.at(i)->setGrabbing(false);
+    //for(int i=0; i<cameraCount_; i++)
+    //    pylonUnitList_.at(i)->setGrabbing(false);
 
     if(!pretest_flag)
     {
@@ -285,6 +337,7 @@ bool pylonNode::connect()
         else
             triggerThread_ = new std::thread(&pylonNode::sendTrigger, this);
 
+        grabbing_ = true;
         return connected_;
     }
 }
@@ -439,8 +492,8 @@ void pylonNode::publishCamInfo()
             }
         }
 
-        cameraInfoPub_.publish(msg);
-        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+        captureInfoPub_.publish(msg);
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
 }
 

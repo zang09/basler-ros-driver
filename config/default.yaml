@@ -4,4 +4,5 @@ frame_rate: 30    # 0: trigger mode
 camera1:
     name: cam1
     serial_number: 23641283
+    calibration_path: /home/haebum/sensor_ws/src/basler-ros-driver/config/camera.yaml
 

@@ -53,6 +53,11 @@ void pylonUnit::setID(int id)
     eventHandler_->setID(id);
 }
 
+void pylonUnit::setCameraData(sensor_msgs::CameraInfo cam_info)
+{
+    eventHandler_->setCameraData(cam_info);
+}
+
 void pylonUnit::setReverseOption(bool x, bool y)
 {
     while(eventHandler_->getBusyFlag())
@@ -382,6 +387,7 @@ CCustomEvtHandler::CCustomEvtHandler()
 {
     image_transport::ImageTransport it(nh_);
     cameraImagePub_ = it.advertise("basler_ros_driver/camera1/image_raw", 1);
+    cameraInfoPub_ = nh_.advertise<sensor_msgs::CameraInfo>("basler_ros_driver/camera1/camera_info", 1);
 
     camBusy_ = false;
 }
@@ -435,6 +441,8 @@ void CCustomEvtHandler::OnImageGrabbed(Pylon::CBaslerUniversalInstantCamera &cam
         header.stamp = ros::Time::now();
         sensor_msgs::ImagePtr img_msg = cv_bridge::CvImage(header, "bgr8", cv_img).toImageMsg();
         cameraImagePub_.publish(img_msg);
+        cam_info_.header = header;
+        cameraInfoPub_.publish(cam_info_);
 
         camBusy_ = false;
     }
@@ -452,6 +460,11 @@ void CCustomEvtHandler::initCnt()
 void CCustomEvtHandler::setID(int id)
 {
     id_ = id;
+}
+
+void CCustomEvtHandler::setCameraData(sensor_msgs::CameraInfo cam_info)
+{
+    cam_info_ = cam_info;
 }
 
 void CCustomEvtHandler::setStoreDir(const string path)
