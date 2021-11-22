@@ -7,8 +7,9 @@
 #include <sensor_msgs/CameraInfo.h>
 #include <sensor_msgs/distortion_models.h>
 #include <basler_ros_driver/grabbing.h>
-#include <basler_ros_driver/trigger.h>
 #include <basler_ros_driver/saveDirectory.h>
+#include <basler_ros_driver/setCameraOptions.h>
+#include <basler_ros_driver/trigger.h>
 #include <basler_ros_driver/cameraInfo.h>
 
 #include <iostream>
@@ -57,8 +58,9 @@ public:
 
 private:
     bool grabbingService(basler_ros_driver::grabbingRequest& req, basler_ros_driver::grabbingResponse& res);
-    bool triggerService(basler_ros_driver::triggerRequest& req, basler_ros_driver::triggerResponse& res);
     bool saveDirectoryService(basler_ros_driver::saveDirectoryRequest& req, basler_ros_driver::saveDirectoryResponse& res);
+    bool setCameraOptionsService(basler_ros_driver::setCameraOptionsRequest& req, basler_ros_driver::setCameraOptionsResponse& res);
+    bool triggerService(basler_ros_driver::triggerRequest& req, basler_ros_driver::triggerResponse& res);
 
     void imageMonitoring(int id);
     void publishCamInfo();
@@ -68,8 +70,9 @@ private:
     ros::NodeHandle nh_;
 
     ros::ServiceServer srvGrabbing_;
-    ros::ServiceServer srvTrigger_;
     ros::ServiceServer srvSaveDirectory_;
+    ros::ServiceServer srvSetCamOptions_;
+    ros::ServiceServer srvTrigger_;
 
     ros::Publisher captureInfoPub_;
 

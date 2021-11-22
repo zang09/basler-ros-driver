@@ -1,0 +1,9 @@
+int64 idx
+float64 brightness
+int64 funcProfile
+float64 gainLower
+float64 gainUpper
+float64 timeLower
+float64 timeUpper
+---
+bool success

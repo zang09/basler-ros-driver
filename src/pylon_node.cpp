@@ -441,6 +441,21 @@ bool pylonNode::saveDirectoryService(basler_ros_driver::saveDirectoryRequest &re
     return res.success;
 }
 
+bool pylonNode::setCameraOptionsService(basler_ros_driver::setCameraOptionsRequest &req, basler_ros_driver::setCameraOptionsResponse &res)
+{
+    int idx = req.idx - 1;
+    if(idx < 0 || idx >= pylonUnitList_.size())
+    {
+        res.success = false;
+        return res.success;
+    }
+
+    pylonUnitList_.at(idx)->setImageQuality(req.brightness, req.funcProfile, req.gainLower, req.gainUpper, req.timeLower, req.timeUpper);
+
+    res.success = true;
+    return res.success;
+}
+
 void pylonNode::imageMonitoring(int id)
 {
     while(connected_)
