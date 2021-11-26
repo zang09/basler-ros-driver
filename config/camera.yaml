@@ -7,15 +7,15 @@ CameraMat: !!opencv-matrix
   rows: 3
   cols: 3
   dt: d
-  data: [768.416941, -0.303774,  1206.804108,
-         0.0,        768.240854, 993.276818,
-         0.0,        0.0,        1.0     ]
+  data: [592.31954,   0.     , 297.83982,
+           0.     , 594.89289, 248.34304,
+           0.     ,   0.     ,   1.     ]
 
 DistCoeffs: !!opencv-matrix
   rows: 5
   cols: 1
   dt: d
-  data: [0.017931, 0.006102, -0.10670, -0.010670, 0.000000]
+  data: [-0.103009, 0.105492, 0.001131, -0.000095, 0.000000]
 
-Camera.width: 2448
-Camera.height: 2048
+Camera.width: 610
+Camera.height: 512
