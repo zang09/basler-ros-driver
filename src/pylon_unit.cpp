@@ -441,9 +441,9 @@ void CCustomEvtHandler::OnImageGrabbed(Pylon::CBaslerUniversalInstantCamera &cam
 
         std_msgs::Header header;
         header.stamp = ros::Time::now();
-        cv::Mat resize_img;
-        cv::resize(cv_img, resize_img, cv::Size(610, 512));
-        sensor_msgs::ImagePtr img_msg = cv_bridge::CvImage(header, "bgr8", resize_img).toImageMsg();
+        // cv::Mat resize_img;
+        // cv::resize(cv_img, resize_img, cv::Size(610, 512));
+        sensor_msgs::ImagePtr img_msg = cv_bridge::CvImage(header, "bgr8", cv_img).toImageMsg();
         cameraImagePub_.publish(img_msg);
         cam_info_.header = header;
         cameraInfoPub_.publish(cam_info_);

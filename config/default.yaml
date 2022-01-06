@@ -1,5 +1,5 @@
 camera_count : 1
-frame_rate: 30    # 0: trigger mode
+frame_rate: 15    # 0: trigger mode
 
 camera1:
     name: cam1
