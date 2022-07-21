@@ -1,6 +1,6 @@
 # basler-ros-driver
 
-### - 파라미터 설정(config/default.yaml)
+### 파라미터 설정(config/default.yaml)
 
 ​	`camera_count` : 카메라 개수
 
@@ -12,13 +12,13 @@
 
 
 
-### - 노드 실행
+### 노드 실행
 
 ​	`$ roslaunch basler_ros_driver run.launch`
 
 
 
-### - Publish 메세지
+### Publish 메세지
 
 ​	`basler_ros_driver/camera_info` : 현재 실행되는 카메라에 대한 정보
 
@@ -26,14 +26,10 @@
 
 
 
-### - 서비스 List	
+### 서비스 List	
 
 |          Service Name          |                 Notes                  |
 | :----------------------------: | :------------------------------------: |
 |   basler_ros_driver/grabbing   | value : 0 = stop, 1 = start **(bool)** |
 |   basler_ros_driver/trigger    |  value : 1 = send trigger **(bool)**   |
 | basler_ros_driver/set_save_dir | image save directory path **(string)** |
-
-
-
-​	
